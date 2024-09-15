@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+
+    <div class="flex justify-center items-start space-x-8">
+        <!-- Upload Box -->
+        <div id="upload-container" class="bg-white p-6 rounded-lg shadow-md w-96 transition-all duration-500">
+            <h1 class="text-2xl font-semibold mb-6 text-center text-gray-700">Upload a File</h1>
+            <form id="upload-form" enctype="multipart/form-data" class="space-y-4">
+                <div class="drop-area flex justify-center items-center p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 cursor-pointer" id="drop-area">
+                    <div class="text-center" id="drop-text">
+                        <p class="text-gray-500">Drag & Drop a file here or click to select a file</p>
+                        <input type="file" name="file" class="hidden-input hidden" id="file-input">
+                    </div>
+                </div>
+                <p id="file-status" class="text-center text-green-600 hidden">Ready to save the file</p>
+                <button id="save-button" type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 hidden">Save File</button>
+                <p id="upload-message" class="text-center text-green-600 hidden">Image saved!</p>
+            </form>
+    
+            <form id="analyse-form" method="POST" class="mt-4 hidden">
+                <button id="analyse-button" type="button" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-all duration-200">Analyse Uploaded Image</button>
+            </form>
+        </div>
+    
+        <!-- Analysis Box (Initially hidden) -->
+        <div id="analysis-container" class="flex flex-col space-y-4 hidden transition-all duration-500 w-96">
+            <div id="sender-name" class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold">Sender's Name</h2>
+                <p class="text-gray-700" id="sender-name-value"></p>
+            </div>
+    
+            <div id="invoice-number" class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold">Invoice Number</h2>
+                <p class="text-gray-700" id="invoice-number-value"></p>
+            </div>
+    
+            <div id="due-date" class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold">Due Date</h2>
+                <p class="text-gray-700" id="due-date-value"></p>
+            </div>
+    
+            <div id="total-sum" class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold">Total Sum</h2>
+                <p class="text-gray-700" id="total-sum-value"></p>
+            </div>
+    
+            <div id="category" class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold">Category of Products</h2>
+                <p class="text-gray-700" id="category-value"></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const fileStatus = document.getElementById('file-status');
+        const saveButton = document.getElementById('save-button');
+        const analyseForm = document.getElementById('analyse-form');
+        const analyseButton = document.getElementById('analyse-button');
+        const uploadMessage = document.getElementById('upload-message');
+        const analysisContainer = document.getElementById('analysis-container');
+        const uploadContainer = document.getElementById('upload-container');
+    
+        // Elements to display analysis results
+        const senderNameValue = document.getElementById('sender-name-value');
+        const invoiceNumberValue = document.getElementById('invoice-number-value');
+        const dueDateValue = document.getElementById('due-date-value');
+        const totalSumValue = document.getElementById('total-sum-value');
+        const categoryValue = document.getElementById('category-value');
+    
+        // Show the save button when a file is selected or dropped
+        function showSaveButton() {
+            fileStatus.classList.remove('hidden');
+            saveButton.classList.remove('hidden');
+        }
+    
+        // Handle clicking on drop area to open file input dialog
+        dropArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+    
+        // Handle dragover and drop events
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('bg-gray-50', 'border-gray-400');
+        });
+    
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('bg-gray-50', 'border-gray-400');
+        });
+    
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('bg-gray-50', 'border-gray-400');
+    
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files;
+                showSaveButton();  // Show the save button after file drop
+            }
+        });
+    
+        // Handle file input change event
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                showSaveButton();  // Show the save button after file selection
+            }
+        });
+    
+        // Handle form submission with AJAX to save the file
+        document.getElementById('upload-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+    
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+    
+            fetch('/upload', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Show the "Image saved" message
+                uploadMessage.classList.remove('hidden');
+                // Show the "Analyse Uploaded Image" button
+                analyseForm.classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    
+        // Handle the analysis button click to analyse the image and display results
+        analyseButton.addEventListener('click', function () {
+            // Move the upload container to the left
+            uploadContainer.classList.add('translate-x-[-50%]');
+    
+            // Show the analysis container
+            analysisContainer.classList.remove('hidden');
+    
+            // Make AJAX request to perform analysis
+            fetch('/analyze', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display the analysis result in the respective boxes
+                senderNameValue.textContent = data.sender_name;
+                invoiceNumberValue.textContent = data.invoice_number;
+                dueDateValue.textContent = data.due_date;
+                totalSumValue.textContent = data.total_sum;
+                categoryValue.textContent = data.category;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+    
+    
+   
+    
+    
+    
+    
+</body>
+</html>
